@@ -1,0 +1,83 @@
+#include <QApplication>
+#include <QImage>
+#include <QLabel>
+#include <QTextStream>
+#include <QString>
+
+#include <iostream>
+#include <vector>
+#include <complex>
+#include <cmath>
+
+using namespace std;
+
+const int INTENS_MIN = 0;
+const int INTENS_MAX = 255;
+
+const QString file_name = "gray_lenna_small.png";
+
+void dft2d(
+		const QImage &image, //input image
+		vector<vector<complex<double>>> &output, //Fourier transform of the input image
+		bool dir
+	 )
+{
+	//dimensions
+	int m=image.height(); //number of rows
+	int n=image.width(); //number of columns
+
+	//resize the output vector
+	output.resize(m,vector<complex<double>>(n));
+        //if the direction is true,a.k.a 1, then 1; otherwise -1;
+	double sign=dir ? +1.0 : -1.0;
+
+	for (int indx_trs_row=0;indx_trs_row<m;indx_trs_row++)
+	{
+		for (int indx_trs_col=0;indx_trs_col<n;indx_trs_col++)
+		{
+			complex<double> sum(0,0);
+			for (int indx_img_row=0;indx_img_row<m;indx_img_row++)
+			{
+				//quint8 -> 8-bit unsigned integer; values from 0 to 255
+				quint8* ptr_row=(quint8*)(image.bits()+indx_img_row*image.bytesPerLine());
+				for (int indx_img_col=0;indx_img_col<n;indx_img_col++)
+				{
+					double expnt=sign*2*M_PI*(1.0*indx_trs_row*indx_img_row/m+1.0*indx_trs_col*indx_img_col/n);
+					double centered = ptr_row[indx_img_col] * pow(-1.0, indx_img_row + indx_img_col);
+					sum+=centered*exp(complex<double>(0,expnt));
+				}
+			}
+	output[indx_trs_row][indx_trs_col]=sum;
+}
+}
+}
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+    QImage image;
+    QLabel label;
+    if (image.load(file_name))
+    {
+        cout << "Image loaded." << endl;
+        cout << "Format: " << image.format() << endl;
+        QImage spc(image.height(), image.width(), QImage::Format_Grayscale8);
+        if (image.format() == QImage::Format_Grayscale8)
+        {
+            vector< vector< complex<double> > > trs;
+	    //forward DFT
+            dft2d(image, trs,false);
+        //    spectrum(trs, spc);
+        } 
+             
+        label.setPixmap(QPixmap::fromImage(spc));
+    }
+    else
+    {
+        cout << "Cannot load image!" << endl;
+    }
+
+    label.show();
+
+    return app.exec();
+}//main
