@@ -1,0 +1,18 @@
+1) mkdir hellostrm
+2) cd hellostrm
+	to copy the image before using it in the code: cp /mnt/d/lenna.png . -> to copy the imge to the current dir
+3) touch hellostrm.cpp
+4) qmake6 -project
+--g++ -o homework1 homework1.cpp
+5) qmake6?
+	gvim...
+	open the pro file and add:
+	after INCLUDEPATH += .:
+	QT +=gui 
+	QT +=widgets
+5) qmake6
+6) nano hellostrm.cpp -> da napulnim cpp file-a s code
+7) make
+8) ./hellostrm -> to execute the program
+
+cp /mnt/d/lenna.png ~/shrink_img
