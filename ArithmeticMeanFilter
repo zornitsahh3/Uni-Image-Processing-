@@ -1,0 +1,54 @@
+#include <iostream>
+#include <QApplication>
+#include <QImage>
+#include <QLabel>
+#include <QPixmap>
+#include <QtGlobal>
+using namespace std;
+
+void meanFilterGray(const QImage &in, QImage &out, int k)
+{
+    int DK = k / 2;
+    double coef = 1.0 / (k * k);
+
+    for (int i = 0; i < in.height(); i++)
+    {
+        for (int j = 0; j < in.width(); j++)
+        {
+            double sum = 0.0;
+
+            for (int ki = -DK; ki <= DK; ki++)
+            {
+                for (int kj = -DK; kj <= DK; kj++)
+                {
+                    int x = i + ki;
+                    int y = j + kj;
+
+                    if (x >= 0 && x < in.height() &&
+                        y >= 0 && y < in.width())
+                    {
+                        sum += qGray(in.pixel(y, x));
+                    }
+                }
+}
+
+            int value = static_cast<int>(sum * coef);
+            out.setPixel(j, i, value);
+        }
+    }
+}
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+    QImage in_image("lenna.png");
+    QImage gray_image = in_image.convertToFormat(QImage::Format_Grayscale8);
+    QImage out_image(gray_image.size(), gray_image.format());
+    meanFilterGray(gray_image, out_image, 5);
+    QLabel label;
+    label.setPixmap(QPixmap::fromImage(out_image));
+    label.setWindowTitle("Filtered Image");
+    label.resize(out_image.width(), out_image.height());
+    label.show();
+    return app.exec();
+}//main
+
