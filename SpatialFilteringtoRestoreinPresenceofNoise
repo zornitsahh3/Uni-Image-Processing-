@@ -1,0 +1,59 @@
+#include <iostream>
+#include <QApplication>
+#include <QImage>
+#include <QLabel>
+#include <QPixmap>
+#include <QtGlobal>
+
+using namespace std;
+const int SIZE=256;
+const int M=16;
+const int N=16;
+const QString in_image = "lenna.png";
+void ameanF1t(const QImage &in_image,QImage &out_image,int kern_dim)
+{
+	const int DK=kern_dim/2;
+	const double coef=1.0/(kern_dim*kern_dim);
+	for (int indx_row=0;indx_row<in_image.height();indx_row++)
+	{
+		quint8* ptr_out_row=(quint8*)(out_image.bits()+indx_row*out_image.bytesPerLine());
+		for (int indx_col=0;indx_col<in_image.width();indx_col++)
+		{
+			double conv_value=0;
+			for (int indx_ker_row=0;indx_ker_row<kern_dim;indx_ker_row++)
+			{
+				int x=indx_row-DK+indx_ker_row;
+				if (x>=0 && x<in_image.height())
+				{
+					quint8* ptr_in_row=(quint8*)(in_image.bits()+x*in_image.bytesPerLine());
+					for (int indx_ker_col=0;indx_ker_col<kern_dim;indx_ker_col++)
+					{
+						int y=indx_col-DK+indx_ker_col;
+						if (y>=0 && y<in_image.width())
+						{
+							conv_value+=ptr_in_row[y]*coef;
+						}
+					}
+				}
+			}
+		ptr_out_row[indx_col]=(int)conv_value;
+		}
+	}
+}
+
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);	
+    QImage in_image("lenna.png");
+    QImage gray_image = in_image.convertToFormat(QImage::Format_Grayscale8);
+    QImage out_image(gray_image.size(), gray_image.format());
+    ameanF1t(gray_image, out_image, 5);
+    QLabel label;
+    label.setPixmap(QPixmap::fromImage(out_image));
+    label.setWindowTitle("Filtered Image");
+    label.resize(out_image.width(), out_image.height());
+    label.show();
+    return app.exec();
+}//main
+
+
