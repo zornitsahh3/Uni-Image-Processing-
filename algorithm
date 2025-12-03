@@ -11,7 +11,7 @@
 	QT +=gui 
 	QT +=widgets
 5) qmake6
-6) nano hellostrm.cpp -> da napulnim cpp file-a s code
+6) nano hellostrm.cpp -> fulfill the cpp file with code
 7) make
 8) ./hellostrm -> to execute the program
 
