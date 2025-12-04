@@ -1,0 +1,111 @@
+#include <QApplication>
+#include <QLabel>
+#include <QImage>
+#include <QPixmap>
+#include <QTextStream>
+#include <stdexcept>
+#include <QtMath>
+
+// Constants
+const int INTENS_MIN = 0;
+const int INTENS_MAX = 255;
+
+const QString file_name = "barbie.jpg";
+
+// --- Placeholder functions (you must implement these!) ---
+double hue(double r, double g, double b)
+{
+    // TODO: implement hue formula
+    return 0.0;
+}
+
+double saturation(double r, double g, double b)
+{
+    // TODO: implement saturation formula
+    return 0.0;
+}
+
+double intensity(double r, double g, double b)
+{
+    return (r + g + b) / 3.0;
+}
+// ---------------------------------------------------------
+
+void rgbToHsi(
+    const QImage &image,
+    QImage &h_image,
+    QImage &s_image,
+    QImage &i_image
+)
+{
+    for (int indx_row = 0; indx_row < image.height(); indx_row++)
+    {
+        const QRgb *ptr_row_image =
+            reinterpret_cast<const QRgb*>(image.scanLine(indx_row));
+
+        quint8 *ptr_row_hue =
+            reinterpret_cast<quint8*>(h_image.bits() +
+                                      indx_row * h_image.bytesPerLine());
+
+        quint8 *ptr_row_sat =
+            reinterpret_cast<quint8*>(s_image.bits() +
+                                      indx_row * s_image.bytesPerLine());
+
+        quint8 *ptr_row_int =
+            reinterpret_cast<quint8*>(i_image.bits() +
+                                      indx_row * i_image.bytesPerLine());
+
+        for (int indx_col = 0; indx_col < image.width(); indx_col++)
+        {
+            double red = qRed(ptr_row_image[indx_col])   / 255.0;
+            double grn = qGreen(ptr_row_image[indx_col]) / 255.0;
+            double blu = qBlue(ptr_row_image[indx_col])  / 255.0;
+
+            ptr_row_hue[indx_col] = static_cast<int>(hue(red, grn, blu)) % 256;
+            ptr_row_sat[indx_col] = static_cast<int>(saturation(red, grn, blu)) % 256;
+            ptr_row_int[indx_col] = static_cast<int>(intensity(red, grn, blu)) % 256;
+        }
+    }
+}
+
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+
+    QImage image;
+    QLabel h_label;
+    QLabel s_label;
+    QLabel i_label;
+
+    if (image.load(file_name))
+    {
+        QTextStream(stdout) << "Image loaded: " << file_name << Qt::endl;
+
+        // Ensure proper format
+        if (image.format() != QImage::Format_RGB32)
+        {
+            image = image.convertToFormat(QImage::Format_RGB32);
+        }
+
+        // Create grayscale output images
+        QImage h_image(image.width(), image.height(), QImage::Format_Grayscale8);
+        QImage s_image(image.width(), image.height(), QImage::Format_Grayscale8);
+        QImage i_image(image.width(), image.height(), QImage::Format_Grayscale8);
+
+        rgbToHsi(image, h_image, s_image, i_image);
+
+        h_label.setPixmap(QPixmap::fromImage(h_image));
+        s_label.setPixmap(QPixmap::fromImage(s_image));
+        i_label.setPixmap(QPixmap::fromImage(i_image));
+
+        h_label.show();
+        s_label.show();
+        i_label.show();
+    }
+    else
+    {
+        QTextStream(stdout) << "Cannot load image: " << file_name << Qt::endl;
+    }
+
+    return app.exec();
+}
