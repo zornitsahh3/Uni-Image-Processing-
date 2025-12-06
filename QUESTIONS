@@ -1,0 +1,11 @@
+-what means '8-bit color channels' 
+A digital color image is usually made of three color components:
+Red
+Green
+Blue
+Each component (channel) has a certain number of possible values.
+When we say 8-bit channel, we mean:
+The channel uses 8 bits (1 byte) to store its value.
+So an 8-bit red channel means the "red amount" of each pixel is between 0 (no red) and 255 (maximum red).
+Most standard images (JPEG, PNG, BMP, etc.) use:
+8-bit Red + 8-bit Green + 8-bit Blue = 24-bit color image
