@@ -9,3 +9,60 @@ The channel uses 8 bits (1 byte) to store its value.
 So an 8-bit red channel means the "red amount" of each pixel is between 0 (no red) and 255 (maximum red).
 Most standard images (JPEG, PNG, BMP, etc.) use:
 8-bit Red + 8-bit Green + 8-bit Blue = 24-bit color image
+Example pixel:
+Red = 200
+Green = 120
+Blue = 50
+-------------------------------------
+-What is a color channel?
+A color channel is one of the three components that together form the pixel’s color.
+Think of an image as three black-and-white images stacked:
+Red channel   (0–255)
+Green channel (0–255)
+Blue channel  (0–255)
+Each pixel has one value for each of the three channels.
+When you take the red channel and visualize it alone, you see how much red intensity each pixel contains.
+Qt extracts channel values like this:
+qRed(pixel)
+qGreen(pixel)
+qBlue(pixel)
+-------------------------------------
+What does hold one value per intensity level mean?
+The histogram array:
+double hR[256];
+has 256 elements.
+Each element corresponds to one possible intensity from 0 to 255.
+So:
+hR[0] = how many pixels had red intensity = 0
+hR[1] = how many pixels had red intensity = 1
+...
+hR[255] = how many pixels had red intensity = 255
+Count how often each possible value occurs.
+-------------------------------------
+What are histogram bins?
+A bin is simply a bucket that collects values in a histogram.
+In this case:
+There are 256 bins.
+Bin 0 counts how many pixels have intensity 0.
+Bin 1 counts how many pixels have intensity 1
+…
+Bin 255 counts intensity 255.
+-------------------------------------
+What is QRgb, and why do we use it?
+QRgb is a Qt type that represents one 32-bit pixel:
+[ Alpha (8 bits) | Red (8 bits) | Green (8 bits) | Blue (8 bits) ]
+Internally it’s typically an unsigned 32-bit integer.
+Example (in hex):
+0xFF32A7C1
+FF = alpha
+32 = red
+A7 = green
+C1 = blue
+Qt provides helpful functions:
+qRed(pixel)    → extracts the red bits
+qGreen(pixel)  → extracts green
+qBlue(pixel)   → extracts blue
+qAlpha(pixel)  → extracts alpha
+We use QRgb because:
+It matches the memory format of QImage::Format_RGB32
+It lets us easily extract color channels
