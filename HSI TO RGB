@@ -1,0 +1,142 @@
+#include <QApplication>
+#include <QImage>
+#include <QLabel>
+#include <QTextStream>
+#include <QString>
+
+#include <cmath>
+
+using namespace std;
+const double EPS = 1.0e-8;
+const int INTENS_MAX = 255;
+const QString file_name = "barbie.jpg";
+
+inline double min2(double frst, double scnd)
+{
+    return frst <= scnd ? frst : scnd;
+}//min2
+
+inline double min3(double frst, double scnd, double thrd)
+{
+    return min2(frst, min2(scnd, thrd));
+}//min3
+
+inline double hue(double red, double grn, double blu)
+{
+    double num = ((red - grn) + (red - blu)) / 2.0;
+    double den = sqrt((red - grn) * (red - grn) + (red - blu) * (grn - blu));
+    double phi = acos(num / (den + EPS)) * 180.0 / M_PI;
+
+    return blu <= grn ? phi : 360 - phi;
+}//hue
+
+inline double saturation(double red, double grn, double blu)
+{
+    return 1.0 - 3.0 * min3(red, grn, blu) / (red + grn + blu);
+}//saturation
+
+inline double intensity(double red, double grn, double blu)
+{
+    return (red + grn + blu) / 3.0;
+}//intensity
+void rgbToHsi(
+        const QImage &in_image,
+        QImage &h_image,
+        QImage &s_image,
+        QImage &i_image
+        )
+{
+    for (int indx_row = 0; indx_row < in_image.height(); indx_row++)
+    {
+        QRgb* ptr_row_input = (QRgb*)in_image.scanLine(indx_row);
+        quint8* ptr_row_hue = (quint8*)(h_image.bits() 
+                + indx_row * h_image.bytesPerLine());
+        quint8* ptr_row_sat = (quint8*)(s_image.bits() 
+                + indx_row * s_image.bytesPerLine());
+        quint8* ptr_row_int = (quint8*)(i_image.bits() 
+                + indx_row * i_image.bytesPerLine());
+        for (int indx_col = 0; indx_col < in_image.width(); indx_col++)
+        {
+            double red = 1.0 * qRed(ptr_row_input[indx_col]) / INTENS_MAX;
+            double grn = 1.0 * qGreen(ptr_row_input[indx_col]) / INTENS_MAX;
+            double blu = 1.0 * qBlue(ptr_row_input[indx_col]) / INTENS_MAX;
+
+            ptr_row_hue[indx_col] = (int)(hue(red, grn, blu)) % INTENS_MAX;
+            ptr_row_sat[indx_col] = (int)(saturation(red, grn, blu) * INTENS_MAX);
+            ptr_row_int[indx_col] = (int)(intensity(red, grn, blu) * INTENS_MAX);
+        }
+    }
+}//rgbToHsi
+
+void hsiToRgb(double H,double S,double I,double &R,double &G,double &B)
+{
+    double Hrad=qDegreesToRadians(H);
+    //hsi divides the hue circle into three 120 degree sectors; hence we
+    //have 3 cases
+
+    //case1: 0deg<H<120deg
+    if(H<120) {
+    B=I*(1-S);
+    R=I*(1 + (S * cos(Hrad) / cos(qDegreesToRadians(60 - H))));
+    G = 3*I - (R + B);
+            }
+    //case2: 120deg<H<240deg
+    else if (H<240) {
+    double H2=H-120;
+    double H2rad=qDegreesToRadians(H2);
+    R = I * (1 - S);
+    G = I * (1 + (S * cos(H2rad) / cos(qDegreesToRadians(60 - H2))));
+    B = 3*I - (R + G);
+            }
+    //case3:
+    else {
+    double H2 = H - 240;
+    double H2rad = qDegreesToRadians(H2);
+
+    G = I * (1 - S);
+    B = I * (1 + (S * cos(H2rad) / cos(qDegreesToRadians(60 - H2))));
+    R = 3*I - (G + B);
+            }
+    R = std::clamp(R, 0.0, 1.0);
+    G = std::clamp(G, 0.0, 1.0);
+    B = std::clamp(B, 0.0, 1.0);  
+}
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+    QImage image;
+    if (!image.load(file_name)) {
+        QTextStream(stdout) << "Cannot load image: " << file_name << Qt::endl;
+        return -1;
+    }
+QImage h_image(image.width(), image.height(), QImage::Format_Grayscale8);
+    QImage s_image(image.width(), image.height(), QImage::Format_Grayscale8);
+    QImage i_image(image.width(), image.height(), QImage::Format_Grayscale8);
+    rgbToHsi(image, h_image, s_image, i_image);
+    QImage reconstructed(image.width(), image.height(), QImage::Format_RGB32);
+  
+    for (int y = 0; y < image.height(); y++)
+{
+    QRgb *out_row = reinterpret_cast<QRgb*>(reconstructed.scanLine(y));
+    const uchar *hrow = h_image.scanLine(y);
+    const uchar *srow = s_image.scanLine(y);
+    const uchar *irow = i_image.scanLine(y);
+
+    for (int x = 0; x < image.width(); x++)
+    {
+        double H = hrow[x];          // Hue 0..255
+        double S = srow[x] / 255.0;  // Saturation 0..1
+        double I = irow[x] / 255.0;  // Intensity 0..1
+
+        double R, G, B;
+        hsiToRgb(H, S, I, R, G, B);
+
+        out_row[x] = qRgb(R * 255, G * 255, B * 255);
+    }
+}
+    QLabel out_label;
+    out_label.setPixmap(QPixmap::fromImage(reconstructed));
+    out_label.show();
+    return app.exec();
+}//main
