@@ -1,0 +1,71 @@
+#include <QApplication>
+#include <QImage>
+#include <QLabel>
+#include <QTextStream>
+#include <algorithm>
+
+int main(int argc, char* argv[])
+{
+    QApplication app(argc, argv);
+
+    QString file_name = "lenna.png";
+    QImage image(file_name);
+    if (image.isNull()) {
+        QTextStream(stdout) << "Cannot load image: " << file_name << "\n";
+        return -1;
+    }
+
+    if (image.format() != QImage::Format_RGB32)
+        image = image.convertToFormat(QImage::Format_RGB32);
+
+    QImage smoothed(image.width(), image.height(), QImage::Format_RGB32);
+
+    int kernel_size = 3;   // 3x3 neighborhood
+    int half = kernel_size / 2;
+
+    for (int y = 0; y < image.height(); y++)
+    {
+        QRgb* out_row = reinterpret_cast<QRgb*>(smoothed.scanLine(y));
+
+        for (int x = 0; x < image.width(); x++)
+        {
+            int sumR = 0, sumG = 0, sumB = 0;
+            int count = 0;
+
+            // Loop over neighborhood
+            for (int dy = -half; dy <= half; dy++)
+            {
+                int ny = y + dy;
+                if (ny < 0 || ny >= image.height()) continue;
+
+                const QRgb* in_row = reinterpret_cast<const QRgb*>(image.scanLine(ny));
+
+                for (int dx = -half; dx <= half; dx++)
+                {
+                    int nx = x + dx;
+                    if (nx < 0 || nx >= image.width()) continue;
+
+                    QRgb pixel = in_row[nx];
+                    sumR += qRed(pixel);
+                    sumG += qGreen(pixel);
+                    sumB += qBlue(pixel);
+                    count++;
+                }
+            }
+
+            // Compute average
+            int avgR = sumR / count;
+            int avgG = sumG / count;
+            int avgB = sumB / count;
+
+            out_row[x] = qRgb(avgR, avgG, avgB);
+        }
+    }
+
+    QLabel label;
+    label.setPixmap(QPixmap::fromImage(smoothed));
+    label.show();
+
+    return app.exec();
+}
+
