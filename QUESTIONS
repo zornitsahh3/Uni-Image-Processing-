@@ -96,3 +96,15 @@ Some algorithms (e.g., histogram equalization) require normalized histograms to 
 4. Remove biases
 If one image has more pixels, its raw counts dominate.
 Normalization removes this imbalance.
+-------------------------------------
+QImage is optimized for manipulating image pixels (editing, reading values).
+It lives in regular RAM.
+It is not optimized for display — it is optimized for processing pixels.
+-------------------------------------
+So what does QPixmap::fromImage(image) do?
+✔ Converts the QImage into a QPixmap
+✔ Transfers pixel data into a display-optimized format
+✔ Prepares the image so Qt can render it efficiently in a widget
+Think of it like:
+QImage → good for editing pixels
+QPixmap → good for showing pixels
