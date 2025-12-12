@@ -1,0 +1,59 @@
+#include <iostream>
+#include <QApplication>
+#include <QImage>
+#include <QLabel>
+#include <QPixmap>
+#include <QtGlobal>
+using namespace std;
+
+void MidPointFilterGray(const QImage &in, QImage &out, int k) //k-the coefficient of the filter kernel,aka the size
+{
+    int DK = k / 2;
+
+    for (int i = 0; i < in.height(); i++) //looping through image rows
+    {
+        for (int j = 0; j < in.width(); j++) //looping through image columns
+        {
+            //initializing the values of min and max, respectively
+            double minVal=255.0; 
+            double maxVal=0.0; 
+
+            for (int ki = -DK; ki <= DK; ki++)
+            {
+                for (int kj = -DK; kj <= DK; kj++)
+                {
+                    int x = i + ki;
+                    int y = j + kj;
+
+                    if (x >= 0 && x < in.height() &&
+                        y >= 0 && y < in.width())
+                    {
+                        int v = qGray(in.pixel(y, x));
+                        minVal = std::min(minVal, (double)v);
+                        maxVal = std::max(maxVal, (double)v);
+                    }
+                }
+            }
+
+            int value = (int)((minVal+maxVal)/2.0);
+            //set the new pixel value
+            out.setPixel(j, i, value); //set the pixel at row i and column j
+        }
+    }
+}
+int main(int argc, char *argv[])
+{
+    QApplication app(argc, argv);
+    QImage in_image("dog.jpg");
+    //QImage in_image("lenna.png");
+    //convert the in inamge to gray scale
+    QImage gray_image = in_image.convertToFormat(QImage::Format_Grayscale8);
+    QImage out_image(gray_image.size(), gray_image.format());
+    MidPointFilterGray(gray_image, out_image, 5);
+    QLabel label;
+    label.setPixmap(QPixmap::fromImage(out_image));
+    label.setWindowTitle("Filtered Image");
+    label.resize(out_image.width(), out_image.height());
+    label.show();
+    return app.exec();
+}//main
