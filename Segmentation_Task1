@@ -75,10 +75,7 @@ void filter(const QImage& in_image,
                 }
             }
 
-            int value = prc(conv_value);
-            value = std::clamp(value, INTENS_MIN, INTENS_MAX);
-
-            out_ptr[col] = static_cast<quint8>(value);
+            out_ptr[col] = prc(conv_value);
         }
     }
 }
@@ -108,7 +105,7 @@ int main(int argc, char* argv[])
 
     QImage out_image(in_image.size(), QImage::Format_Grayscale8);
 
-    Threshold<double> threshold(200.0);
+    Threshold<double> threshold(100.0);
     filter(in_image, out_image, kernel, threshold);
 
     label.setPixmap(QPixmap::fromImage(out_image));
